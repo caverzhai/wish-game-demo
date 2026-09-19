@@ -96,7 +96,7 @@ function readBody(req) {
 
 // Determine mode: demo (default for this independent demo repo) or real
 const IS_DEMO_MODE = process.env.DEMO_MODE !== 'false' && process.env.DEMO_MODE !== '0';
-const DB_NAME = IS_DEMO_MODE ? 'railway_demo' : null;
+const DB_NAME = null; // Independent demo project uses its own MySQL instance, no DB name override needed
 
 // Create single app instance based on mode
 const app = await createApp(undefined, process.env, DB_NAME);
@@ -105,7 +105,7 @@ const app = await createApp(undefined, process.env, DB_NAME);
 if (IS_DEMO_MODE) {
   app.cfg.payoutEverySec = 20 * 60; // 20 minutes insurance release
   app.cfg.settleAfterSec = 60; // 1 minute wish settlement
-  console.log('[demo] Running in DEMO mode with database: railway_demo');
+  console.log('[demo] Running in DEMO mode with independent MySQL database');
   console.log('[config] Demo payoutEverySec:', app.cfg.payoutEverySec, '(' + (app.cfg.payoutEverySec / 60) + ' minutes)');
   console.log('[config] Demo settleAfterSec:', app.cfg.settleAfterSec, 'seconds');
 } else {
