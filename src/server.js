@@ -163,7 +163,11 @@ const server = http.createServer(async (req, res) => {
     return res.end(jstr({ error: 'RateLimit', message: 'Too many requests, please slow down' }));
   }
   const url = new URL(req.url, 'http://localhost');
-  const routePath = url.pathname;
+  let routePath = url.pathname;
+  // Demo mode: frontend adds /demo prefix to API calls, strip it for route matching
+  if (IS_DEMO_MODE && routePath.startsWith('/demo/')) {
+    routePath = routePath.slice(5); // remove '/demo'
+  }
   try {
     // Debug endpoint: list env var keys (demo only)
     if (routePath === '/debug/env' && IS_DEMO_MODE) {
