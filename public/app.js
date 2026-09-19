@@ -2198,7 +2198,18 @@ function init() {
   $('disclaimerConfirm').onclick = confirmDisclaimer;
   // Auto demo mode detection: if URL contains /demo, auto login
   if (window.DEMO_MODE === true) {
-    setTimeout(() => { demoEnter(); }, 500);
+    setTimeout(() => {
+        if (localStorage.getItem('token') && localStorage.getItem('uid')) {
+          state.uid = localStorage.getItem('uid');
+          state.wallet = localStorage.getItem('wallet');
+          state.demoMode = true;
+          enterMain();
+          return;
+        }
+        const cached = localStorage.getItem('demoAccountNum');
+        if (cached) demoEnter(parseInt(cached, 10));
+        else demoEnter();
+      }, 500);
   }
 
   // System announcement publish (admin)
