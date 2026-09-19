@@ -183,8 +183,8 @@ const server = http.createServer(async (req, res) => {
         const conn = await mysql.createConnection({
           host: process.env.MYSQLHOST || 'mysql.railway.internal',
           port: Number(process.env.MYSQLPORT || 3306),
-          user: process.env.MYSQLUSER || 'demo',
-          password: process.env.MYSQLPASSWORD || 'demo123456',
+          user: process.env.MYSQLUSER,
+          password: process.env.MYSQLPASSWORD,
           database: process.env.MYSQLDATABASE || 'railway',
           connectTimeout: 10000,
         });

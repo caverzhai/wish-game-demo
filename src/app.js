@@ -23,13 +23,12 @@ export function useMysql(env = process.env) {
 }
 
 export async function createApp(cfg = DEFAULT_CONFIG, env = process.env, databaseOverride = null, isDemoMode = false) {
-  // Demo mode: use hardcoded MySQL connection (independent demo DB on Railway)
+  // Demo mode: MySQL connection uses Railway-injected env vars (MYSQLHOST, MYSQLUSER, MYSQLPASSWORD, etc.)
   if (isDemoMode) {
     env.MYSQLHOST = env.MYSQLHOST || 'mysql.railway.internal';
     env.MYSQLPORT = env.MYSQLPORT || '3306';
-    env.MYSQLUSER = env.MYSQLUSER || 'demo';
-    env.MYSQLPASSWORD = env.MYSQLPASSWORD || 'demo123456';
     env.MYSQLDATABASE = env.MYSQLDATABASE || 'railway';
+    // MYSQLUSER and MYSQLPASSWORD come from Railway service references, no hardcoded fallback
   }
   // Demo mode: apply faster config overrides
   const effectiveCfg = isDemoMode ? { ...cfg, ...DEMO_CONFIG_OVERRIDES } : cfg;
