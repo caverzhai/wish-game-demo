@@ -1,0 +1,620 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<title>Three-Minute Wish Pool</title>
+<link rel="icon" type="image/png" href="/logo.png" />
+<link rel="apple-touch-icon" href="/logo.png" />
+<link rel="shortcut icon" href="/logo.png" />
+<link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+<div id="app">
+  <header class="topbar">
+    <div class="brand"><span class="logo">✦</span><span data-i18n="appTitle">Three-Minute Wish Pool</span><span id="feBuild" style="font-size:10px;opacity:.5;margin-left:6px;"></span></div>
+    <div class="top-right">
+      <div class="lang-dropdown" id="langDropdown">
+        <button class="lang-trigger" id="langTrigger">
+          <span id="langCurrent">EN</span>
+          <span class="lang-arrow">▾</span>
+        </button>
+        <div class="lang-menu hide" id="langMenu">
+          <div class="lang-option" data-lang="en">EN</div>
+          <div class="lang-option" data-lang="zh-TW">繁體</div>
+          <div class="lang-option" data-lang="ja">日本語</div>
+          <div class="lang-option" data-lang="ar">العربية</div>
+          <div class="lang-option" data-lang="id">Indonesia</div>
+          <div class="lang-option" data-lang="ko">한국어</div>
+          <div class="lang-option" data-lang="ru">Русский</div>
+          <div class="lang-option" data-lang="hi">हिन्दी</div>
+          <div class="lang-option" data-lang="ur">اردو</div>
+        </div>
+      </div>
+      <span id="who" class="who hide"></span>
+    </div>
+  </header>
+
+  <!-- Login: connect wallet to use -->
+  <div id="loginMask" class="mask">
+    <div class="login-card">
+      <div class="login-logo">✦</div>
+      <h2 data-i18n="appTitle">Three-Minute Wish Pool</h2>
+      <p class="muted" data-i18n="loginTip">Connect a wallet to start. Invite links bind referrers automatically.</p>
+      <button id="connectBtn" class="btn-primary big" data-i18n="connectWallet">Connect Wallet</button>
+      <button id="demoBtn" class="btn-ghost" data-i18n="demoEnter">No wallet? Enter as demo</button>
+      <p id="loginErr" class="err"></p>
+    </div>
+  </div>
+
+  <main id="main" class="hide">
+    <!-- Home: rounds + history -->
+    <section id="tab-home" class="panel active">
+      <div class="round-card" id="roundCard">
+        <div id="heroBanner" class="hero-banner"></div>
+        <div class="hist-strip" id="histDots"></div>
+        <div class="round-meta">
+          <span id="roundNo" class="round-no">—</span>
+          <span id="roundState" class="round-state"></span>
+        </div>
+        <div class="countdown" id="countdown">—</div>
+        <div class="cd-label" style="display:none"><span data-i18n="remainSec">seconds left</span> · <span data-i18n="lockAt">closed at 170s</span></div>
+        <div class="bet-count"><span data-i18n="betCount">Wishes</span>：<b id="betCount">0</b></div>
+      </div>
+
+      <div class="pools">
+        <button id="sideRed" class="pool red"><span class="pool-name" data-i18n="redPool">Red Pool</span><small data-i18n="oddWin">Odd sum → Red</small></button>
+        <button id="sideGreen" class="pool green"><span class="pool-name" data-i18n="greenPool">Green Pool</span><small data-i18n="evenWin">Even sum → Green</small></button>
+      </div>
+
+      <div class="pick-card">
+        <div class="pick-label" data-i18n="pickLabel">Pick a number (0-9)</div>
+        <div class="num-grid" id="numGrid"></div>
+      </div>
+
+      <div class="amount-card">
+        <label data-i18n="amountLabel">Wish amount (1-99 units, integer)</label>
+        <div class="bet-row">
+          <input id="amountInput" type="number" min="1" max="99" step="1" inputmode="numeric" placeholder="1-99" />
+          <span class="bet-label" data-i18n="confirmWish">Confirm Wish</span>
+          <button id="betBtn" class="bet-circle" aria-label="confirm"></button>
+        </div>
+      </div>
+
+      <div id="insStatusBar" class="ins-status-bar off"></div>
+
+
+      <!-- How to play guide -->
+      <div class="howto-box">
+        <div class="howto-title" data-i18n="howtoTitle">How to Play</div>
+        <div class="howto-item"><span class="howto-num">1</span><span data-i18n="howtoStep1">Pick Red or Green pool, enter 1-99 units, choose a number 0-9</span></div>
+        <div class="howto-item"><span class="howto-num">2</span><span data-i18n="howtoStep2">Sum of all picks: odd = Red wins, even = Green wins. Winners split pool after 2.5% fee</span></div>
+        <div class="howto-item"><span class="howto-num">3</span><span data-i18n="howtoStep3">No insurance: keep all winnings after fee. With insurance (premium ≥20 + switch on): pay 10% of winnings, but losses accumulate — every 100 units lost creates a payout node returned over 100 periods</span></div>
+      </div>
+
+      <div id="playMsg" class="msg"></div>
+      <button id="selfCheckBtn" class="btn-ghost self-check" data-i18n="selfCheck">Wallet environment check</button>
+
+      <!-- Compact insurance pool display (public, dynamic) -->
+      <div class="pool-public-mini" id="poolPublicMini"></div>
+
+      <!-- History (below confirm bet) -->
+      <h4 class="hist-title" data-i18n="historyTitle">Past rounds</h4>
+      <div id="historyList" class="history-list"></div>
+    </section>
+
+    <!-- Plaza -->
+    <section id="tab-bbs" class="panel">
+      <div class="sub-tab">
+        <button id="subTabBbs" class="sub-tab-btn active" data-i18n="bbsTitle">Board</button>
+        <button id="subTabVoice" class="sub-tab-btn" data-i18n="voiceTitle">Voice Rooms</button>
+      </div>
+      <div id="bbsView">
+        <!-- System announcement (admin-published, 8192 bytes) -->
+        <div id="announcementBox" class="announcement-box hide">
+          <div class="announcement-title" data-i18n="announcement">Announcement</div>
+          <div class="announcement-content" id="announcementContent"></div>
+          <div class="announcement-time" id="announcementTime"></div>
+        </div>
+        <!-- Admin publish announcement (admin only) -->
+        <div id="adminAnnounceBox" class="admin-announce hide">
+          <textarea id="announceInput" maxlength="8192" rows="4" placeholder=""></textarea>
+          <div class="bbs-bar">
+            <span id="announceChar">0/8192</span>
+            <button id="announceSend" class="btn-primary" data-i18n="publishAnnouncement">Publish</button>
+          </div>
+        </div>
+        <!-- Admin moderation panel (admin wallet only) -->
+        <div id="adminPanel" class="admin-panel hide">
+          <div class="admin-title" data-i18n="adminModeration">Moderation</div>
+          <div class="row">
+            <input id="wordInput" maxlength="32" placeholder="" />
+            <button id="wordAddBtn" class="btn-primary" data-i18n="addBlockedWord">Block word</button>
+          </div>
+          <div id="wordTags" class="word-tags"></div>
+          <div class="admin-title" data-i18n="whitelistTitle">Invite Whitelist</div>
+          <div class="row">
+            <input id="wlWalletInput" maxlength="64" placeholder="0x..." />
+            <input id="wlRateInput" type="number" min="0" max="100" step="1" placeholder="per-mille (e.g. 3=0.3%)" style="width:80px" />
+            <button id="wlAddBtn" class="btn-primary" data-i18n="addWhitelist">Add</button>
+          </div>
+          <div id="wlList" class="word-tags"></div>
+                    <div class="admin-title">Regional Agents</div>
+          <div class="row">
+            <input id="raNameInput" maxlength="32" placeholder="Agent name" style="width:100px" />
+            <input id="raWalletInput" maxlength="64" placeholder="0x wallet" style="width:140px" />
+            <input id="raRateInput" type="number" min="0" max="100" step="1" placeholder="rate" style="width:60px" />
+            <input id="raRegionsInput" maxlength="256" placeholder="Regions (comma sep)" style="width:180px" />
+            <button id="raAddBtn" class="btn-primary">Add</button>
+          </div>
+          <div id="raList" class="word-tags"></div>
+<div class="admin-title">NPC Bots</div>
+          <div class="row">
+            <input id="npcNameInput" maxlength="32" placeholder="Name (optional)" style="width:100px" />
+            <input id="npcWalletInput" maxlength="64" placeholder="0x wallet (optional)" style="width:160px" />
+            <select id="npcLangSelect" style="width:80px">
+              <option value="">Auto</option>
+              <option value="en">EN</option>
+              <option value="zh-TW">繁中</option>
+              <option value="ja">日本語</option>
+              <option value="ar">العربية</option>
+              <option value="id">ID</option>
+              <option value="ko">한국어</option>
+              <option value="ru">RU</option>
+              <option value="hi">हिन्दी</option>
+              <option value="ur">اردو</option>
+            </select>
+            <button id="npcAddBtn" class="btn-primary">Add</button>
+          </div>
+          <div id="npcList" class="word-tags"></div>
+          <div class="admin-title" data-i18n="userLookup">User Lookup</div>
+          <div class="row">
+            <input id="lookupWalletInput" maxlength="64" placeholder="0x wallet or UID" style="flex:1" />
+            <button id="lookupBtn" class="btn-primary" data-i18n="lookupBtn">Lookup</button>
+          </div>
+          <div id="lookupResult" class="lookup-result hide"></div>
+          <div class="admin-title">Set Inviter</div>
+          <div class="row">
+            <input id="setInviterTarget" maxlength="32" placeholder="Target UID (e.g. U47)" style="flex:1" />
+            <input id="setInviterUid" maxlength="32" placeholder="Inviter UID" style="flex:1" />
+            <button id="setInviterBtn" class="btn-primary">Set</button>
+          </div>
+        </div>
+        <div class="bbs-post">
+          <textarea id="bbsInput" maxlength="1024" rows="3" placeholder=""></textarea>
+          <div class="bbs-bar">
+            <span id="bbsChar">0/1024</span>
+            <button id="bbsSend" class="btn-primary" data-i18n="bbsSend">Post</button>
+          </div>
+        </div>
+        <div id="bbsList" class="bbs-list"></div>
+      </div>
+      <!-- Voice rooms -->
+      <div id="voiceView" class="hide">
+        <div class="voice-head">
+          <button id="createRoomBtn" class="btn-primary" data-i18n="createRoom">Create Room</button>
+        </div>
+        <div id="roomList" class="room-list"></div>
+      </div>
+    </section>
+
+    <!-- Lottery -->
+    <section id="tab-lottery" class="panel">
+      <div class="lottery-header">
+        <h3 class="lottery-main-title" data-i18n="lotteryMainTitle">幸运抽奖池</h3>
+        <p class="lottery-subtitle" data-i18n="lotterySubtitle">一枚最多得5000枚</p>
+      </div>
+      <button id="charityApplyBtn" class="charity-apply-btn" onclick="Charity.openApply()" data-i18n="charityApplyBtn">困难慈善救助申请</button>
+      <div id="charitySection" class="charity-section"></div>
+
+      <div id="taskSection" class="task-section"></div>
+      <div id="lotteryListWrap">
+        <div id="lotteryList" class="lottery-grid"></div>
+        <div class="lottery-rules">
+          <h4 data-i18n="lotteryRulesTitle">玩法说明</h4>
+          <div class="lottery-rule-item">
+            <span class="rule-num">1</span>
+            <span data-i18n="lotteryRule1">选择一个幸运池，投入整数枚数（最少1枚），系统从剩余号码中随机分配，不保证连续。</span>
+          </div>
+          <div class="lottery-rule-item">
+            <span class="rule-num">2</span>
+            <span data-i18n="lotteryRule2">号码售完后，系统自动随机开奖，完全公平公正，所有人均可查看中奖号码。</span>
+          </div>
+          <div class="lottery-rule-item">
+            <span class="rule-num">3</span>
+            <span data-i18n="lotteryRule3">奖金自动发放到您的余额，可立即提现，不押不申请不审核。</span>
+          </div>
+          <div class="lottery-rule-item">
+            <span class="rule-num">4</span>
+            <span data-i18n="lotteryRule4">每个号码中奖概率相同，买得越多中奖机会越大。一期结束自动开启下一期。</span>
+          </div>
+          <div class="lottery-rule-item">
+            <span class="rule-num">5</span>
+            <span data-i18n="lotteryRule5">平台收取5%手续费，用于平台运营与慈善捐助。好人有好报，祝您好运！</span>
+          </div>
+        </div>
+      </div>
+      <div id="lotteryDetail" class="lottery-detail hide">
+        <div class="lottery-detail-topbar">
+          <button id="lotteryBackBtn" class="lottery-back-btn">← <span data-i18n="back">Back</span></button>
+        </div>
+        <div id="lotteryDetailContent"></div>
+      </div>
+    </section>
+
+    <!-- Charity Apply View -->
+    <section id="charityApply" class="panel">
+      <div class="lottery-detail-topbar">
+        <button onclick="Charity.backToList()" class="lottery-back-btn" data-i18n="charityBack">← Back</button>
+      </div>
+      <h3 style="color:var(--gold);text-align:center;margin:10px 0;" data-i18n="charityApplyBtn">困难慈善救助申请</h3>
+      <form id="charityApplyForm" class="charity-form" onsubmit="event.preventDefault();Charity.submitApply();">
+        <div class="form-group">
+          <label data-i18n="charityName">姓名 Name</label> *
+          <input type="text" name="charityName" required maxlength="100" />
+        </div>
+        <div class="form-group">
+          <label data-i18n="charityGender">性别 Gender</label>
+          <select name="charityGender">
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label data-i18n="charityPhoto">照片 Photo</label> *
+          <div class="charity-photo-upload">
+            <input type="file" id="charityPhotoInput" accept="image/*" onchange="Charity.handlePhotoUpload(this)" required style="display:none;" />
+            <button type="button" class="btn-primary charity-photo-btn" onclick="document.getElementById('charityPhotoInput').click()" data-i18n="charityPhoto">选择照片</button>
+            <span id="charityPhotoName" style="font-size:12px;color:var(--muted);margin-left:8px;"></span>
+          </div>
+          <img id="charityPhotoPreview" style="display:none;max-width:200px;margin-top:10px;border-radius:8px;" />
+          <input type="hidden" id="charityPhotoData" />
+        </div>
+        <div class="form-group">
+          <label data-i18n="charityCountry">国家 Country</label> *
+          <input type="text" name="charityCountry" required maxlength="100" />
+        </div>
+        <div class="form-group">
+          <label data-i18n="charityCity">城市 City</label>
+          <input type="text" name="charityCity" maxlength="100" />
+        </div>
+        <div class="form-group">
+          <label data-i18n="charityHelpType">需要什么帮助 Help Needed</label> *
+          <input type="text" name="charityHelpType" required maxlength="200" />
+        </div>
+        <div class="form-group">
+          <label data-i18n="charityReason">申请理由 Reason</label> *
+          <textarea name="charityReason" required maxlength="2000" rows="4"></textarea>
+        </div>
+        <div class="form-group">
+          <label data-i18n="charityAmount">申请金额 Requested Amount</label> *
+          <input type="number" name="charityAmount" required min="1" value="100" />
+          <small style="color:var(--muted);" data-i18n="charityGoalNote">目标筹款额 = 申请金额 × 5</small>
+        </div>
+        <div class="form-group">
+          <label data-i18n="charityProof">证明材料 Proof</label>
+          <div class="charity-photo-upload">
+            <input type="file" id="charityProofInput" accept="image/*" onchange="Charity.handleProofUpload(this)" style="display:none;" />
+            <button type="button" class="btn-primary charity-photo-btn" onclick="document.getElementById('charityProofInput').click()" data-i18n="charityProofUpload">上传证明 Upload Proof</button>
+            <span id="charityProofName" style="font-size:12px;color:var(--muted);margin-left:8px;"></span>
+          </div>
+          <img id="charityProofPreview" style="display:none;max-width:200px;margin-top:10px;border-radius:8px;" />
+          <input type="hidden" id="charityProofData" />
+        </div>
+        <button type="button" onclick="Charity.submitApply()" class="btn-primary" style="width:100%;padding:12px;" data-i18n="charitySubmit">提交申请 Submit</button>
+      </form>
+    </section>
+
+    <!-- Charity Detail View -->
+    <section id="charityDetail" class="panel">
+      <div class="lottery-detail-topbar">
+        <button onclick="Charity.backToList()" class="lottery-back-btn" data-i18n="charityBack">← Back</button>
+      </div>
+      <div id="charityDetailContent"></div>
+    </section>
+
+
+    <!-- Task Marketplace -->
+    <section id="taskList" class="panel">
+      <div class="lottery-detail-topbar">
+        <button onclick="Task.backToList()" class="lottery-back-btn">← Back</button>
+        <button onclick="Task.showMyTasks()" class="lottery-back-btn" style="margin-left:auto;">My Tasks</button>
+      </div>
+      <h3 style="color:var(--gold);text-align:center;margin:10px 0;">Find the Right Person</h3>
+      <div id="taskListContent"></div>
+    </section>
+
+    <section id="taskCreate" class="panel">
+      <div class="lottery-detail-topbar">
+        <button onclick="Task.backToList()" class="lottery-back-btn" data-i18n="taskBack">← Back</button>
+      </div>
+      <h3 style="color:var(--gold);text-align:center;margin:10px 0;" data-i18n="taskCreateTitle">Post a Task</h3>
+      <form id="taskCreateForm" class="charity-form" onsubmit="event.preventDefault();Task.submitCreate();">
+        <div id="taskCreateError" style="display:none;background:rgba(239,68,68,0.1);border:1px solid #ef4444;border-radius:8px;padding:10px;margin-bottom:12px;color:#ef4444;font-size:13px;text-align:center;"></div>
+        <div class="form-group">
+          <label data-i18n="taskTitle">Title * (min 16 chars, no punctuation or spaces)</label>
+          <input type="text" name="taskTitle" required maxlength="200" data-i18n-placeholder="taskTitlePh" placeholder="Describe your task clearly in at least 16 characters..." oninput="Task.updateCharCount('taskTitle','titleCount',16)" />
+          <div style="font-size:11px;color:var(--muted);text-align:right;margin-top:2px;"><span id="titleCount">0</span>/16</div>
+        </div>
+        <div class="form-group">
+          <label data-i18n="taskLocation">Location</label>
+          <input type="text" name="taskLocation" maxlength="200" data-i18n-placeholder="taskLocationPh" placeholder="e.g. Hokkaido, Japan (or Remote)" />
+        </div>
+        <div class="form-group">
+          <label data-i18n="taskReward">Reward (coins) *</label>
+          <input type="number" name="taskReward" min="1" required data-i18n-placeholder="taskRewardPh" placeholder="Full payment amount" />
+        </div>
+        <div class="form-group">
+          <label data-i18n="taskDesc">Description * (min 30 chars)</label>
+          <textarea name="taskDesc" required rows="6" data-i18n-placeholder="taskDescPh" placeholder="Describe what you need done, timeline, requirements... (at least 30 characters)" oninput="Task.updateCharCount('taskDesc','descCount',30)"></textarea>
+          <div style="font-size:11px;color:var(--muted);text-align:right;margin-top:2px;"><span id="descCount">0</span>/30</div>
+        </div>
+        <div class="form-group">
+          <label data-i18n="taskImage">Image * (at least one)</label>
+          <input type="file" name="taskImage" accept="image/*" required onchange="Task.handleImageUpload(this)" />
+          <input type="hidden" name="taskImageData" id="taskImageData" />
+          <img id="taskImagePreview" style="max-width:100%;border-radius:8px;margin-top:8px;display:none;" />
+        </div>
+        <div style="background:rgba(34,197,94,0.1);border:1px solid #22c55e;border-radius:8px;padding:10px;margin-bottom:12px;text-align:center;">
+          <span style="color:#22c55e;font-weight:600;font-size:13px;" data-i18n="taskEscrowNotice">Platform has collected the full security deposit</span>
+        </div>
+        <button type="submit" class="btn-primary" style="width:100%;" data-i18n="taskPostBtn">Post Task (Escrow Reward)</button>
+        <p style="font-size:11px;color:var(--muted);text-align:center;margin-top:8px;" data-i18n="taskEscrowDesc">Reward is escrowed immediately. Released after confirmed delivery.</p>
+      </form>
+    </section>
+
+    <section id="taskDetail" class="panel">
+      <div class="lottery-detail-topbar">
+        <button onclick="Task.backToList()" class="lottery-back-btn">← Back</button>
+      </div>
+      <div id="taskDetailContent"></div>
+    </section>
+
+    <section id="taskMy" class="panel">
+      <div class="lottery-detail-topbar">
+        <button onclick="Task.backToList()" class="lottery-back-btn">← Back</button>
+      </div>
+      <h3 style="color:var(--gold);text-align:center;margin:10px 0;">My Tasks</h3>
+      <div id="taskMyContent"></div>
+    </section>
+
+    <!-- Insurance -->
+    <section id="tab-insurance" class="panel">
+      <h3 data-i18n="insTitle">Wish Insurance</h3>
+      <!-- Insurance pool total / next pending release display (dynamic comparison) -->
+      <div class="pool-public" id="poolPublicCard"></div>
+
+      <div class="ins-status">
+        <span data-i18n="insSwitch">Insurance</span>：<b id="insSwitchState"></b>
+        <button id="insSwitchBtn" class="btn-mini"></button>
+      </div>
+      <div class="grid2">
+        <div class="mini-card"><span data-i18n="premium">Premium</span><b id="premiumBal">0</b></div>
+        <div class="mini-card"><span data-i18n="lossAccum">Net loss</span><b id="lossAccum">0</b></div>
+      </div>
+      <div class="row">
+        <input id="premiumInput" type="number" min="20" step="1" placeholder="≥20" inputmode="numeric" />
+        <button id="premiumBtn" class="btn-primary" data-i18n="depositPremium">Deposit</button>
+      </div>
+      <p id="premiumMsg" class="msg"></p>
+      <div class="row">
+        <input id="premiumOutInput" type="number" min="0" step="1" inputmode="numeric" />
+        <button id="premiumOutBtn" class="btn-ghost" data-i18n="premiumWithdraw">Premium back to balance</button>
+      </div>
+      <p class="muted" data-i18n="insRule"></p>
+
+      <!-- Insurance detailed guide -->
+      <div class="ins-guide-box">
+        <div class="howto-title" data-i18n="insGuideTitle">Insurance Guide</div>
+        <div class="howto-item"><span class="howto-num">1</span><span data-i18n="insGuide1">Activate: turn on the switch AND keep premium balance ≥ 20 units</span></div>
+        <div class="howto-item"><span class="howto-num">2</span><span data-i18n="insGuide2">When you win: 10% of your winnings goes to the insurance pool</span></div>
+        <div class="howto-item"><span class="howto-num">3</span><span data-i18n="insGuide3">When you lose: net loss accumulates. Every 100 units lost creates one payout node (20 units premium deducted), returned over 100 periods</span></div>
+        <div class="howto-item"><span class="howto-num">4</span><span data-i18n="insGuide4">Payout every 6 hours (UTC 3/9/15/21). Any new node within 168 hours revives all your nodes; otherwise current period is forfeited</span></div>
+        <div class="howto-item"><span class="howto-num">5</span><span data-i18n="insGuide5">Withdraw premium back to balance only when insurance switch is off</span></div>
+      </div>
+
+      <!-- Insurance release status -->
+      <div id="insReleaseStatus" class="ins-release-status" style="display:none;">
+        <div class="ins-release-title" data-i18n="insReleaseTitle">Insurance Release Status</div>
+        <div id="insReleaseContent"></div>
+      </div>
+
+      <h4 data-i18n="myNodes">My payout nodes</h4>
+      <div id="nodeList" class="node-list"></div>
+
+      <!-- Serious notice -->
+      <div class="ins-notice">
+        <div class="ins-notice-title" data-i18n="seriousNotice">郑重提示</div>
+        <img src="/insurance-notice.jpg" alt="Notice" class="ins-notice-img" />
+      </div>
+    </section>
+
+    <!-- Me: wallet + invite -->
+    <section id="tab-me" class="panel">
+      <h3 data-i18n="meWallet">Wallet</h3>
+      <div id="chainModeTip" class="chain-tip hide"></div>
+      <div id="pendingBox" class="pending-box hide">
+        <div class="pending-head"><b data-i18n="pendingTitle">Pending on-chain payments</b><span id="pendingCount"></span></div>
+        <div id="pendingList" class="pending-list"></div>
+        <button id="pendingVerifyBtn" class="btn-ghost" data-i18n="pendingVerify">Verify &amp; credit now</button>
+        <div class="row manual-tx">
+          <input id="manualTxInput" placeholder="0x… tx hash" />
+          <button id="manualTxBtn" class="btn-primary" data-i18n="manualCredit">Credit by hash</button>
+        </div>
+      </div>
+      <div class="grid3">
+        <div class="mini-card"><span data-i18n="avail">Available</span><b id="availBal">0</b></div>
+        <div class="mini-card frozen-card" id="frozenCard" onclick="showFrozenDetail()" style="cursor:pointer;"><span data-i18n="frozen">Frozen</span><b id="frozenBal">0</b></div>
+        <div class="mini-card"><span data-i18n="premium">Premium</span><b id="premiumBal2">0</b></div>
+      </div>
+      <div class="row">
+        <input id="wdInput" type="number" min="2" max="500" step="1" inputmode="numeric" placeholder="2-500" />
+        <button id="wdBtn" class="btn-primary" data-i18n="withdraw">Withdraw (2-500, fee 1)</button>
+      </div>
+
+<!-- Region verification inline (old phone compatible, no fixed modal) -->
+<div id="regionModal" style="display:none;margin:12px 0;padding:16px;background:#ffffff;border:1px solid #2a3446;border-radius:12px;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+    <h3 style="margin:0;color:#d4a017;font-size:16px;" data-i18n="regionTitle">Location Verification</h3>
+    <button onclick="document.getElementById('regionModal').style.display='none'" style="background:none;border:none;color:#8b97ab;font-size:20px;cursor:pointer;padding:0 8px;">&times;</button>
+  </div>
+  <p style="font-size:12px;color:#8b97ab;margin-bottom:12px;" data-i18n="regionTip">All users must verify their location before the first withdrawal.</p>
+<div style="margin-bottom:12px;">
+      <label style="display:block;font-size:13px;margin-bottom:4px;color:#333333;" data-i18n="regionCountry">Country</label>
+      <select id="regionCountry" style="display:none;"><option value="">-- Select --</option><option value="China">China</option><option value="United States">United States</option><option value="United Kingdom">United Kingdom</option><option value="Russia">Russia</option><option value="India">India</option><option value="Germany">Germany</option><option value="Japan">Japan</option><option value="France">France</option><option value="South Korea">South Korea</option><option value="Italy">Italy</option><option value="Brazil">Brazil</option><option value="Canada">Canada</option><option value="Australia">Australia</option><option value="Netherlands">Netherlands</option><option value="Indonesia">Indonesia</option><option value="Pakistan">Pakistan</option><option value="Mexico">Mexico</option><option value="Vietnam">Vietnam</option><option value="Thailand">Thailand</option><option value="Bangladesh">Bangladesh</option><option value="Other">Other</option></select>
+      <div id="countryTrigger" style="width:100%;padding:12px 10px;border-radius:8px;border:1px solid #2a3446;background:#ffffff;color:#333333;font-size:15px;box-sizing:border-box;cursor:pointer;display:flex;justify-content:space-between;align-items:center;">
+        <span id="countryCurrent" style="color:#999;">-- Select --</span>
+        <span style="font-size:10px;color:#999;">▼</span>
+      </div>
+      <div id="countryMenu" style="display:none;position:absolute;z-index:100;background:#ffffff;border:1px solid #2a3446;border-radius:8px;margin-top:4px;max-height:240px;overflow-y:auto;width:calc(100% - 32px);box-shadow:0 4px 12px rgba(0,0,0,0.15);"><div class="country-option" data-value="" style="padding:10px 14px;font-size:14px;color:#999;cursor:pointer;border-bottom:1px solid #eee;">-- Select --</div><div class="country-option" data-value="China" style="padding:10px 14px;font-size:14px;color:#333;cursor:pointer;border-bottom:1px solid #eee;">China</div><div class="country-option" data-value="United States" style="padding:10px 14px;font-size:14px;color:#333;cursor:pointer;border-bottom:1px solid #eee;">United States</div><div class="country-option" data-value="United Kingdom" style="padding:10px 14px;font-size:14px;color:#333;cursor:pointer;border-bottom:1px solid #eee;">United Kingdom</div><div class="country-option" data-value="Russia" style="padding:10px 14px;font-size:14px;color:#333;cursor:pointer;border-bottom:1px solid #eee;">Russia</div><div class="country-option" data-value="India" style="padding:10px 14px;font-size:14px;color:#333;cursor:pointer;border-bottom:1px solid #eee;">India</div><div class="country-option" data-value="Germany" style="padding:10px 14px;font-size:14px;color:#333;cursor:pointer;border-bottom:1px solid #eee;">Germany</div><div class="country-option" data-value="Japan" style="padding:10px 14px;font-size:14px;color:#333;cursor:pointer;border-bottom:1px solid #eee;">Japan</div><div class="country-option" data-value="France" style="padding:10px 14px;font-size:14px;color:#333;cursor:pointer;border-bottom:1px solid #eee;">France</div><div class="country-option" data-value="South Korea" style="padding:10px 14px;font-size:14px;color:#333;cursor:pointer;border-bottom:1px solid #eee;">South Korea</div><div class="country-option" data-value="Italy" style="padding:10px 14px;font-size:14px;color:#333;cursor:pointer;border-bottom:1px solid #eee;">Italy</div><div class="country-option" data-value="Brazil" style="padding:10px 14px;font-size:14px;color:#333;cursor:pointer;border-bottom:1px solid #eee;">Brazil</div><div class="country-option" data-value="Canada" style="padding:10px 14px;font-size:14px;color:#333;cursor:pointer;border-bottom:1px solid #eee;">Canada</div><div class="country-option" data-value="Australia" style="padding:10px 14px;font-size:14px;color:#333;cursor:pointer;border-bottom:1px solid #eee;">Australia</div><div class="country-option" data-value="Netherlands" style="padding:10px 14px;font-size:14px;color:#333;cursor:pointer;border-bottom:1px solid #eee;">Netherlands</div><div class="country-option" data-value="Indonesia" style="padding:10px 14px;font-size:14px;color:#333;cursor:pointer;border-bottom:1px solid #eee;">Indonesia</div><div class="country-option" data-value="Pakistan" style="padding:10px 14px;font-size:14px;color:#333;cursor:pointer;border-bottom:1px solid #eee;">Pakistan</div><div class="country-option" data-value="Mexico" style="padding:10px 14px;font-size:14px;color:#333;cursor:pointer;border-bottom:1px solid #eee;">Mexico</div><div class="country-option" data-value="Vietnam" style="padding:10px 14px;font-size:14px;color:#333;cursor:pointer;border-bottom:1px solid #eee;">Vietnam</div><div class="country-option" data-value="Thailand" style="padding:10px 14px;font-size:14px;color:#333;cursor:pointer;border-bottom:1px solid #eee;">Thailand</div><div class="country-option" data-value="Bangladesh" style="padding:10px 14px;font-size:14px;color:#333;cursor:pointer;border-bottom:1px solid #eee;">Bangladesh</div><div class="country-option" data-value="Other" style="padding:10px 14px;font-size:14px;color:#333;cursor:pointer;">Other</div></div>
+    </div>
+    <div style="margin-bottom:12px;" id="regionRegionWrapper">
+      <label style="display:block;font-size:13px;margin-bottom:4px;color:#333333;" data-i18n="regionRegion">Province/State</label>
+      <input id="regionRegion" type="text" maxlength="200" style="width:100%;padding:12px 10px;border-radius:8px;border:1px solid #2a3446;background:#ffffff;color:#333333;font-size:15px;box-sizing:border-box;" placeholder="e.g. Guangdong / California" />
+      <select id="regionProvince" style="display:none;width:100%;padding:12px 10px;border-radius:8px;border:1px solid #2a3446;background:#ffffff;color:#333333;font-size:15px;">
+        <option value="">-- Select Province --</option>
+      </select>
+    </div>
+    <div style="margin-bottom:12px;" id="regionCityWrapper">
+      <label style="display:block;font-size:13px;margin-bottom:4px;color:#333333;" data-i18n="regionCity">City</label>
+      <input id="regionCity" type="text" maxlength="200" style="width:100%;padding:12px 10px;border-radius:8px;border:1px solid #2a3446;background:#ffffff;color:#333333;font-size:15px;box-sizing:border-box;" placeholder="e.g. Shenzhen / Los Angeles" />
+      <select id="regionCitySelect" style="display:none;width:100%;padding:12px 10px;border-radius:8px;border:1px solid #2a3446;background:#ffffff;color:#333333;font-size:15px;">
+        <option value="">-- Select City --</option>
+      </select>
+    </div>
+    <div style="margin-bottom:12px;" id="regionDistrictWrapper">
+      <label style="display:block;font-size:13px;margin-bottom:4px;color:#333333;" data-i18n="regionDistrict">District/County</label>
+      <select id="regionDistrict" style="display:none;width:100%;padding:12px 10px;border-radius:8px;border:1px solid #2a3446;background:#ffffff;color:#333333;font-size:15px;margin-bottom:8px;">
+        <option value="">-- Select District/County --</option>
+      </select>
+      <input id="regionDistrictInput" type="text" maxlength="200" style="display:none;width:100%;padding:12px 10px;border-radius:8px;border:1px solid #2a3446;background:#ffffff;color:#333333;font-size:15px;box-sizing:border-box;" placeholder="District/County" />
+    </div>
+    <div style="margin-bottom:16px;" id="regionTownWrapper">
+      <label style="display:block;font-size:13px;margin-bottom:4px;color:#333333;" data-i18n="regionTown">Town/Street</label>
+      <input id="regionTown" type="text" maxlength="200" style="display:none;width:100%;padding:12px 10px;border-radius:8px;border:1px solid #2a3446;background:#ffffff;color:#333333;font-size:15px;box-sizing:border-box;" placeholder="Town / Street / Village" />
+      <select id="regionTownSelect" style="display:none;width:100%;padding:12px 10px;border-radius:8px;border:1px solid #2a3446;background:#ffffff;color:#333333;font-size:15px;">
+        <option value="">-- Select Town/Street --</option>
+      </select>
+    </div>
+    
+  <button id="regionSubmitBtn" class="btn-primary" style="width:100%;margin-top:8px;" onclick="submitRegion()" data-i18n="regionSubmit">Submit & Continue</button>
+</div>
+
+
+      <h3 class="me-gap" id="meInviteTitle" data-i18n="meInvite">Invite</h3>
+      <div id="inviterInfo" class="inviter-info" style="display:none;margin-bottom:12px;padding:10px;background:var(--bg);border-radius:8px;font-size:13px;">
+        <span data-i18n="myInviter">My Inviter:</span> <b id="inviterWallet">-</b>
+      </div>
+      <div id="invTiers" class="inv-tiers"></div>
+      <div class="row">
+        <input id="inviteLink" readonly />
+        <button id="copyInvBtn" class="btn-primary" data-i18n="copy">Copy</button>
+      </div>
+      <div class="qr-wrap">
+        <div id="qrcode" class="qrcode-box"></div>
+        <p class="muted qr-hint" data-i18n="scanQr">Scan to register</p>
+      </div>
+      <div class="grid3">
+        <div class="mini-card"><span data-i18n="qualifiedInvitees">Qualified</span><b id="invCount">0</b></div>
+        <div class="mini-card"><span data-i18n="curRate">Rate</span><b id="invRate">0%</b></div>
+        <div class="mini-card"><span data-i18n="invTotal">Total</span><b id="invTotal">0</b></div>
+      </div>
+
+      <h4 class="me-gap" data-i18n="flows">Transactions</h4>
+      <div id="flowList" class="flow-list"></div>
+    </section>
+  </main>
+
+  <!-- Create room modal -->
+  <div id="createRoomMask" class="mask hide">
+    <div class="login-card">
+      <h3 data-i18n="createRoom">Create Room</h3>
+      <div class="room-type-select">
+        <button class="room-type active" data-type="chat"><b data-i18n="chatRoom">Chat Room</b><small>1 unit · 0.0001/min</small></button>
+        <button class="room-type" data-type="meeting"><b data-i18n="meetingRoom">Meeting</b><small>5 units · 0.01/min</small></button>
+      </div>
+      <input id="roomNameInput" maxlength="30" class="room-name-input" data-i18n-placeholder="roomNamePh" placeholder="Room name (optional)" />
+      <textarea id="roomDescInput" maxlength="200" class="room-desc-input" data-i18n-placeholder="roomDescPh" placeholder="Room description (optional, 200 chars, topic/rules)"></textarea>
+      <input id="roomPasswordInput" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="Optional 4-digit PIN" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;box-sizing:border-box;font-size:14px;letter-spacing:4px;text-align:center">
+      <button id="confirmCreateRoom" class="btn-primary big" data-i18n="confirmCreate">Create</button>
+      <button id="cancelCreateRoom" class="btn-ghost" data-i18n="cancel">Cancel</button>
+    </div>
+  </div>
+
+  <!-- In-room overlay -->
+  <div id="roomMask" class="mask hide room-mask">
+    <div class="room-inner">
+      <div class="room-top">
+        <div class="room-top-row1">
+          <button id="roomBackBtn" class="btn-mini room-back">←</button>
+          <div class="room-title">
+            <b id="roomName"></b>
+            <span id="roomHost" class="room-host"></span>
+          </div>
+        </div>
+        <div class="room-top-row2">
+          <span id="roomRemain" class="room-remain"></span>
+          <button id="roomDissolveBtn" class="room-action-btn btn-danger hide" data-i18n="dissolveRoom">Dissolve</button>
+          <button id="roomShareBtn" class="room-action-btn" data-i18n="share">Share</button>
+          <button id="roomRechargeBtn" class="room-action-btn" data-i18n="addTime">Add Time</button>
+        </div>
+      </div>
+      <div id="roomDesc" class="room-desc hide">
+        <span class="room-desc-label" data-i18n="hostNotice">Host Notice</span>
+        <div class="room-desc-box" id="roomDescBox"></div>
+      </div>
+      <div class="room-members" id="roomMembers"></div>
+      <div class="room-msgs" id="roomMsgs"></div>
+      <div id="meetingControls" class="meeting-controls hide">
+        <button id="micBtn" class="btn-primary" data-i18n="micOn">Mic On</button>
+        <button id="guestListBtn" class="btn-ghost hide" data-i18n="inviteGuest">Invite Guest</button>
+      </div>
+      <div class="room-input-bar">
+        <button id="voiceRecordBtn" class="btn-ghost room-ico" title="Voice">🎤</button>
+        <button id="imageBtn" class="btn-ghost room-ico" title="Image">🖼</button>
+        <input id="roomTextInput" data-i18n-placeholder="saySomething" placeholder="Say something..." />
+        <button id="roomSendBtn" class="btn-primary" data-i18n="send">Send</button>
+      </div>
+      <input type="file" id="imageFileInput" accept="image/*" class="hide" />
+      <div id="recordTip" class="record-tip hide">Recording... <span id="recordTime">0</span>s (max 30s)</div>
+    </div>
+  </div>
+
+  <!-- Bottom dock -->
+  <nav id="dock" class="dock hide">
+    <button data-dock="home" class="dock-item active"><span class="dock-ico">⌂</span><span data-i18n="dockHome">Home</span></button>
+    <button data-dock="lottery" class="dock-item"><span class="dock-ico">♡</span><span data-i18n="dockLottery">Lucky</span></button>
+    <button data-dock="bbs" class="dock-item"><span class="dock-ico">✎</span><span data-i18n="dockBbs">Board</span></button>
+    <button data-dock="insurance" class="dock-item"><span class="dock-ico">✦</span><span data-i18n="dockIns">Insurance</span></button>
+    <button data-dock="me" class="dock-item"><span class="dock-ico">◔</span><span data-i18n="dockMe">Me</span></button>
+  </nav>
+</div>
+<div id="disclaimerMask" class="mask hide">
+  <div class="disclaimer-box">
+    <h3 data-i18n="disclaimerTitle">Disclaimer</h3>
+    <div class="disclaimer-content" id="disclaimerContent">(disclaimer content pending)</div>
+    <button id="disclaimerConfirm" class="btn-primary big" data-i18n="disclaimerAgree">I have read and agree</button>
+  </div>
+</div>
+<script src="/qrcode.min.js?v=2375"></script>
+<script src="/china-districts.js?v=2375"></script>
+  <script src="/china-towns.js?v=2375"></script>
+  <script src="/app.js?v=2390"></script>
+<script src="/task.js?v=2390"></script>
+<script src="/lottery.js?v=2390"></script>
+<script src="/charity.js?v=2390"></script>
+<script src="/voice.js?v=2375"></script>
+
+<!-- Frozen detail modal -->
+<div id="frozenModal" class="modal-overlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:var(--card);border-radius:16px;padding:20px;max-width:400px;width:100%;max-height:80vh;overflow-y:auto;border:1px solid var(--border);">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <h3 style="margin:0;color:var(--gold);" data-i18n="frozenDetail">Frozen Detail</h3>
+      <button onclick="document.getElementById('frozenModal').style.display='none'" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;">&times;</button>
+    </div>
+    <div id="frozenDetailContent" style="font-size:13px;line-height:1.8;"></div>
+  </div>
+</div>
+</body>
+</html>

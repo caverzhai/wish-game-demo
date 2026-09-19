@@ -1,0 +1,16 @@
+node_modules/
+npm-debug.log*
+yarn-error.log*
+.env
+.env.*
+*.log
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+dist/
+coverage/
+*.zip
+
+# 临时截图
+*.png

@@ -1,0 +1,21 @@
+{
+  "name": "wish-game-core",
+  "version": "1.2.0",
+  "private": true,
+  "type": "module",
+  "description": "Three-Minute Wish Pool - centralized web app (red/green pool rounds + optional insurance + invite commissions + withdrawals + BBS + multilingual + on-chain single-token adapter; all amounts in 'units'; 6-decimal fixed-point integers). Zero dependencies in memory mode; mysql2 for MySQL persistence, ethers for on-chain mode.",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test",
+    "demo": "node src/demo.js",
+    "serve": "node src/server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "ethers": "^6.13.2",
+    "mysql2": "^3.24.2",
+    "ws": "^8.21.3"
+  }
+}
