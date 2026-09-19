@@ -1,4 +1,4 @@
-﻿// =============================================================
+// =============================================================
 // server.js - HTTP API + static frontend hosting + built-in auto settlement/payout scheduler
 // Run: node src/server.js (port from PORT env, default 8080)
 // BigInt amounts in responses converted to 'units' numbers for frontend
@@ -94,8 +94,8 @@ function readBody(req) {
   });
 }
 
-// Determine mode: real (default) or demo
-const IS_DEMO_MODE = process.env.DEMO_MODE === 'true' || process.env.DEMO_MODE === '1';
+// Determine mode: demo (default for this independent demo repo) or real
+const IS_DEMO_MODE = process.env.DEMO_MODE !== 'false' && process.env.DEMO_MODE !== '0';
 const DB_NAME = IS_DEMO_MODE ? 'railway_demo' : null;
 
 // Create single app instance based on mode
