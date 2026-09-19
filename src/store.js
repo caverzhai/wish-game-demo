@@ -447,4 +447,15 @@ export class MemoryStore {
     this._seq = s.seq;
     this.admins = s.admins || [];
   }
+
+  // -------- Missing methods for demo/memory store --------
+  async listRegionalAgents() { return []; }
+  async isCommissionEligible(uid, nowSec, windowSec) { return false; }
+  async getMemberLevelInfo(uid, memberLevels) {
+    return { validInvites: 0, level: 0, perMille: 0n, levelName: 'None' };
+  }
+  async listPayoutBatches(limit = 10) { return []; }
+  async countDirectInvitees(uid) { return 0; }
+  async countTotalDownline(uid) { return 0; }
+  async referralSummary(uid) { return { total: 0n, activeInvitees: 0 }; }
 }
