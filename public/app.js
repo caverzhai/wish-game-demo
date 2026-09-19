@@ -2116,29 +2116,24 @@ async function loadDemoHistory() {
   try {
     const fp = getBrowserFingerprint();
     const data = await api('/demo-history', { fingerprint: fp });
-    const list = demoHistoryList;
+    const list = $('demoHistoryList');
     if (!data.accounts || data.accounts.length === 0) {
       list.innerHTML = '<p style="color:#888;font-size:12px;">暂无历史账号</p>';
       return;
     }
-    list.innerHTML = data.accounts.map((a, i) => 
-      <div style="padding:6px;border-bottom:1px solid #222;cursor:pointer;display:flex;justify-content:space-between;align-items:center;" onclick="switchDemoAccount('')">
-        <div>
-          <div style="font-weight:bold;"></div>
-          <div style="font-size:11px;color:#888;">...</div>
-        </div>
-        <div style="text-align:right;">
-          <div style="color:#ffd700;font-size:13px;"> coins</div>
-          <div style="font-size:10px;color:#666;"></div>
-        </div>
-      </div>
-    ).join('');
+    list.innerHTML = data.accounts.map(function(a) {
+      return '<div style="padding:6px;border-bottom:1px solid #222;cursor:pointer;display:flex;justify-content:space-between;align-items:center;" onclick="switchDemoAccount(\'' + a.uid + '\')">' +
+        '<div><div style="font-weight:bold;">' + a.uid + '</div>' +
+        '<div style="font-size:11px;color:#888;">' + a.wallet.slice(0,10) + '...' + a.wallet.slice(-6) + '</div></div>' +
+        '<div style="text-align:right;"><div style="color:#ffd700;font-size:13px;">' + a.balance.toFixed(2) + ' coins</div>' +
+        '<div style="font-size:10px;color:#666;">' + new Date(a.createdAt * 1000).toLocaleString() + '</div></div></div>';
+    }).join('');
   } catch (e) {
-    demoHistoryList.innerHTML = '<p style="color:#f66;font-size:12px;">加载失败: ' + e.message + '</p>';
+    $('demoHistoryList').innerHTML = '<p style="color:#f66;font-size:12px;">加载失败: ' + e.message + '</p>';
   }
 }
 function toggleDemoHistory() {
-  const list = demoHistoryList;
+  const list = $('demoHistoryList');
   if (list.classList.contains('hide')) {
     list.classList.remove('hide');
     loadDemoHistory();
@@ -2152,7 +2147,7 @@ async function switchDemoAccount(uid) {
     const u = await api('/demo-switch', { fingerprint: fp, uid });
     state.uid = u.uid; state.wallet = u.wallet; state.isAdmin = false; state.demoMode = true;
     localStorage.setItem('uid', u.uid); localStorage.setItem('wallet', u.wallet); localStorage.setItem('token', u.token); localStorage.setItem('demoMode', '1');
-    demoHistoryList.classList.add('hide');
+    $('demoHistoryList').classList.add('hide');
     enterMain();
     showToast('已切换到 ' + u.uid);
   } catch (e) {
