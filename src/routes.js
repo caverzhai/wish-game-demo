@@ -70,10 +70,9 @@ export function setupRoutes(app, BUILD, isDemo = false) {
         const hex = Math.abs(hash).toString(16).padStart(8, '0') + Math.abs(hash * 31).toString(16).padStart(8, '0') + Math.abs(hash * 17).toString(16).padStart(8, '0') + Math.abs(hash * 7).toString(16).padStart(8, '0') + Math.abs(hash * 3).toString(16).padStart(8, '0');
         const wallet = '0x' + hex.slice(0, 40);
         try {
-          await store.createUser(uid, wallet, null, now());
+          await store.createUser({ uid, wallet, inviterUid: null, createdAt: now() });
         } catch (e) {
-          // Might already exist due to race, try register instead
-          try { await game.register(wallet, null, now()); } catch {}
+          console.error('[demo] createUser failed for', uid, e.message);
         }
         // Give bonus
         try {

@@ -1,4 +1,4 @@
-﻿// =============================================================
+// =============================================================
 // store.js - in-memory store (async interface, isomorphic with MysqlStore)
 // Domain services only depend on methods declared here; production swaps to MysqlStore, business code unchanged
 // All amounts are BigInt (1e-6 min unit of units)
@@ -48,10 +48,11 @@ export class MemoryStore {
   }
 
   // -------- User / account --------
-  async createUser({ wallet, inviterUid = null, createdAt = 0 }) {
+  async createUser({ wallet, inviterUid = null, createdAt = 0, uid = null }) {
     if (await this.getUserByWallet(wallet)) throw new GameError(Codes.ALREADY_EXISTS, 'This wallet already registered');
-    const uid = await this.nextId('user', 'U');
-    const user = { uid, wallet, inviterUid, insSwitch: false, banned: false, createdAt };
+    const finalUid = uid || await this.nextId('user', 'U');
+    if (uid && this.users.get(uid)) throw new GameError(Codes.ALREADY_EXISTS, 'UID already exists');
+    const user = { uid: finalUid, wallet, inviterUid, insSwitch: false, banned: false, createdAt };
     this.users.set(uid, user);
     this.accounts.set(uid, { available: 0n, frozen: 0n, premium: 0n, lossAccum: 0n });
     return { ...user };
