@@ -5,7 +5,7 @@
 import crypto from 'node:crypto';
 import { ethers } from 'ethers';
 
-const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(32).toString('hex');
+const JWT_SECRET = process.env.JWT_SECRET || 'wishtree-demo-fixed-secret-key-2024-abcdefghijklmnopqrstuvwxyz';
 const JWT_EXPIRES_SEC = 7 * 24 * 60 * 60; // 7 days
 const NONCE_TTL_SEC = 300; // 5 minutes
 
