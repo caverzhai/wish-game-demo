@@ -165,6 +165,12 @@ const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://localhost');
   const routePath = url.pathname;
   try {
+    // Debug endpoint: list env var keys (demo only)
+    if (routePath === '/debug/env' && IS_DEMO_MODE) {
+      const keys = Object.keys(process.env).sort();
+      res.writeHead(200, { 'content-type': 'application/json; charset=utf-8' });
+      return res.end(JSON.stringify({ keys, count: keys.length }));
+    }
     if (routes.some((r) => (typeof r.p === 'string' ? r.p === routePath : r.p.test(routePath)))) {
       const body = req.method === 'POST' ? await readBody(req) : Object.fromEntries(url.searchParams.entries());
       for (const r of routes) {
