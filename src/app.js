@@ -33,8 +33,21 @@ export async function createApp(cfg = DEFAULT_CONFIG, env = process.env, databas
   }
   // Demo mode: apply faster config overrides
   const effectiveCfg = isDemoMode ? { ...cfg, ...DEMO_CONFIG_OVERRIDES } : cfg;
-  const store = (useMysql(env) || isDemoMode) ? new MysqlStore(env, databaseOverride) : new MemoryStore();
-  await store.init();
+  let store;
+  if (useMysql(env) || isDemoMode) {
+    try {
+      store = new MysqlStore(env, databaseOverride);
+      await store.init();
+      console.log('[store] MySQL connected successfully');
+    } catch (e) {
+      console.error('[store] MySQL connection failed, falling back to memory:', e.message);
+      store = new MemoryStore();
+      await store.init();
+    }
+  } else {
+    store = new MemoryStore();
+    await store.init();
+  }
   const insurance = new InsuranceService(store, effectiveCfg);
   const game = new GameService(store, effectiveCfg, insurance);
   const wallet = new WalletService(store, effectiveCfg);
