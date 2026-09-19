@@ -176,6 +176,27 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(200, { 'content-type': 'application/json; charset=utf-8' });
       return res.end(JSON.stringify({ keys, count: keys.length, databaseUrlLength: dbUrl.length, databaseUrlPrefix: dbUrl.slice(0, 20), hasMysqlHost: !!process.env.MYSQLHOST, hasMysqlDatabase: !!process.env.MYSQLDATABASE }));
     }
+    // Debug endpoint: test MySQL connection directly (demo only)
+    if (routePath === '/debug/mysql' && IS_DEMO_MODE) {
+      try {
+        const mysql = await import('mysql2/promise');
+        const conn = await mysql.createConnection({
+          host: process.env.MYSQLHOST || 'mysql.railway.internal',
+          port: Number(process.env.MYSQLPORT || 3306),
+          user: process.env.MYSQLUSER || 'demo',
+          password: process.env.MYSQLPASSWORD || 'demo123456',
+          database: process.env.MYSQLDATABASE || 'railway',
+          connectTimeout: 10000,
+        });
+        const [rows] = await conn.query('SELECT 1 as test, CURRENT_USER() as user, DATABASE() as db');
+        await conn.end();
+        res.writeHead(200, { 'content-type': 'application/json; charset=utf-8' });
+        return res.end(JSON.stringify({ ok: true, result: rows[0], host: process.env.MYSQLHOST || 'mysql.railway.internal' }));
+      } catch (e) {
+        res.writeHead(200, { 'content-type': 'application/json; charset=utf-8' });
+        return res.end(JSON.stringify({ ok: false, error: e.message, code: e.code, stack: e.stack ? e.stack.slice(0, 500) : null }));
+      }
+    }
     if (routes.some((r) => (typeof r.p === 'string' ? r.p === routePath : r.p.test(routePath)))) {
       const body = req.method === 'POST' ? await readBody(req) : Object.fromEntries(url.searchParams.entries());
       for (const r of routes) {
