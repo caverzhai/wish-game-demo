@@ -168,8 +168,9 @@ const server = http.createServer(async (req, res) => {
     // Debug endpoint: list env var keys (demo only)
     if (routePath === '/debug/env' && IS_DEMO_MODE) {
       const keys = Object.keys(process.env).sort();
+      const dbUrl = process.env.DATABASE_URL || '';
       res.writeHead(200, { 'content-type': 'application/json; charset=utf-8' });
-      return res.end(JSON.stringify({ keys, count: keys.length }));
+      return res.end(JSON.stringify({ keys, count: keys.length, databaseUrlLength: dbUrl.length, databaseUrlPrefix: dbUrl.slice(0, 20), hasMysqlHost: !!process.env.MYSQLHOST, hasMysqlDatabase: !!process.env.MYSQLDATABASE }));
     }
     if (routes.some((r) => (typeof r.p === 'string' ? r.p === routePath : r.p.test(routePath)))) {
       const body = req.method === 'POST' ? await readBody(req) : Object.fromEntries(url.searchParams.entries());
