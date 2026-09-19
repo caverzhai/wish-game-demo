@@ -61,7 +61,8 @@ export function setupRoutes(app, BUILD, isDemo = false) {
     const BONUS = 9999n * COIN;
     for (let i = 1; i <= DEMO_ACCOUNT_COUNT; i++) {
       const uid = 'U' + String(i).padStart(3, '0');
-      const existing = await store.getUser(uid);
+      let existing = null;
+      try { existing = await store.getUser(uid); } catch { existing = null; }
       if (!existing) {
         // Deterministic wallet from account number
         let hash = 0;
