@@ -23,9 +23,17 @@ export function useMysql(env = process.env) {
 }
 
 export async function createApp(cfg = DEFAULT_CONFIG, env = process.env, databaseOverride = null, isDemoMode = false) {
+  // Demo mode: use hardcoded MySQL connection (independent demo DB on Railway)
+  if (isDemoMode) {
+    env.MYSQLHOST = env.MYSQLHOST || 'mysql.railway.internal';
+    env.MYSQLPORT = env.MYSQLPORT || '3306';
+    env.MYSQLUSER = env.MYSQLUSER || 'demo';
+    env.MYSQLPASSWORD = env.MYSQLPASSWORD || 'demo123456';
+    env.MYSQLDATABASE = env.MYSQLDATABASE || 'railway';
+  }
   // Demo mode: apply faster config overrides
   const effectiveCfg = isDemoMode ? { ...cfg, ...DEMO_CONFIG_OVERRIDES } : cfg;
-  const store = useMysql(env) ? new MysqlStore(env, databaseOverride) : new MemoryStore();
+  const store = (useMysql(env) || isDemoMode) ? new MysqlStore(env, databaseOverride) : new MemoryStore();
   await store.init();
   const insurance = new InsuranceService(store, effectiveCfg);
   const game = new GameService(store, effectiveCfg, insurance);
