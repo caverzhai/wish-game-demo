@@ -38,9 +38,11 @@ export async function createApp(cfg = DEFAULT_CONFIG, env = process.env, databas
     try {
       store = new MysqlStore(env, databaseOverride);
       await store.init();
-      console.log('[store] MySQL connected successfully');
+      console.log('[store] MySQL connected successfully, host=' + env.MYSQLHOST + ':' + env.MYSQLPORT + ' db=' + env.MYSQLDATABASE + ' user=' + env.MYSQLUSER);
     } catch (e) {
-      console.error('[store] MySQL connection failed, falling back to memory:', e.message);
+      console.error('[store] MySQL connection FAILED: host=' + env.MYSQLHOST + ':' + env.MYSQLPORT + ' db=' + env.MYSQLDATABASE + ' user=' + env.MYSQLUSER + ' error=' + e.message);
+      console.error('[store] MySQL error stack:', e.stack ? e.stack.slice(0, 500) : 'no stack');
+      console.error('[store] Falling back to memory store');
       store = new MemoryStore();
       await store.init();
     }
