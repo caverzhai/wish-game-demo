@@ -52,74 +52,74 @@ export function setupRoutes(app, BUILD, isDemo = false) {
     return b.uid || null;
   }
 
-  // Demo mode: auto-login with browser fingerprint (no wallet signature required)
-  // Each login creates a NEW random account; fingerprint is used to track history per browser
-  const demoHistory = new Map(); // fingerprint -> [{uid, wallet, createdAt, lastActive}]
-  if (isDemo) {
-    route('POST', '/demo-login', async (b) => {
-      const fingerprint = String(b.fingerprint || '').trim();
-      if (!fingerprint || fingerprint.length < 8) throw new GameError(Codes.BAD_INPUT, 'Browser fingerprint required');
-      // Generate a RANDOM new wallet for each demo login (refresh = new account)
-      const randomHex = Array.from({length: 40}, () => '0123456789abcdef'[Math.floor(Math.random() * 16)]).join('');
-      const wallet = '0x' + randomHex;
-      const u = await game.register(wallet, b.inviterUid ?? null, now());
-      // New demo users get 9999 coins bonus
-      try {
-        const COIN = 1000000n;
-        const BONUS = 9999n * COIN;
-        await store.transaction(async () => {
-          await store.applyLedger({ plat: -BONUS });
-          await store.applyAccount(u.uid, { avail: BONUS });
-          await store.addFlow(u.uid, 'DEMO_BONUS', BONUS, { note: 'demo new user bonus 9999' });
-        }, 'demo-bonus');
-        console.log('[demo] new user bonus granted:', u.uid, wallet);
-      } catch (e) { console.error('[demo] bonus failed:', e.message); }
-      // Track in browser history
-      if (!demoHistory.has(fingerprint)) demoHistory.set(fingerprint, []);
-      const history = demoHistory.get(fingerprint);
-      history.unshift({ uid: u.uid, wallet: u.wallet, createdAt: now(), lastActive: now() });
-      if (history.length > 50) history.length = 50; // keep last 50 accounts
-      const token = signJwt({ uid: u.uid, wallet: u.wallet });
-      return { ...u, isAdmin: false, token, isNew: true, demoMode: true };
-    });
-    // Get history of accounts for this browser (for looking back / switching)
-    route('POST', '/demo-history', async (b) => {
-      const fingerprint = String(b.fingerprint || '').trim();
-      if (!fingerprint || fingerprint.length < 8) throw new GameError(Codes.BAD_INPUT, 'Browser fingerprint required');
-      const history = demoHistory.get(fingerprint) || [];
-      // Enrich with current user data
-      const enriched = [];
-      for (const entry of history) {
+  // Demo mode: 100 fixed accounts (U001-U100), random or manual selection
+  const DEMO_ACCOUNT_COUNT = 100;
+  let demoAccountsInitialized = false;
+  async function ensureDemoAccounts() {
+    if (demoAccountsInitialized) return;
+    const COIN = 1000000n;
+    const BONUS = 9999n * COIN;
+    for (let i = 1; i <= DEMO_ACCOUNT_COUNT; i++) {
+      const uid = 'U' + String(i).padStart(3, '0');
+      const existing = await store.getUser(uid);
+      if (!existing) {
+        // Deterministic wallet from account number
+        let hash = 0;
+        const seed = 'demo_account_' + i;
+        for (let c = 0; c < seed.length; c++) hash = ((hash << 5) - hash + seed.charCodeAt(c)) | 0;
+        const hex = Math.abs(hash).toString(16).padStart(8, '0') + Math.abs(hash * 31).toString(16).padStart(8, '0') + Math.abs(hash * 17).toString(16).padStart(8, '0') + Math.abs(hash * 7).toString(16).padStart(8, '0') + Math.abs(hash * 3).toString(16).padStart(8, '0');
+        const wallet = '0x' + hex.slice(0, 40);
         try {
-          const user = await store.getUser(entry.uid);
-          const acc = await store.getAccount(entry.uid);
-          enriched.push({
-            uid: entry.uid,
-            wallet: entry.wallet,
-            createdAt: entry.createdAt,
-            lastActive: entry.lastActive,
-            balance: acc ? Number(acc.available) / 1000000 : 0,
-            banned: user ? user.banned : false,
-          });
-        } catch { /* user may have been deleted */ }
+          await store.createUser(uid, wallet, null, now());
+        } catch (e) {
+          // Might already exist due to race, try register instead
+          try { await game.register(wallet, null, now()); } catch {}
+        }
+        // Give bonus
+        try {
+          await store.transaction(async () => {
+            await store.applyLedger({ plat: -BONUS });
+            await store.applyAccount(uid, { avail: BONUS });
+            await store.addFlow(uid, 'DEMO_BONUS', BONUS, { note: 'demo account bonus 9999' });
+          }, 'demo-bonus-' + uid);
+        } catch (e) { console.error('[demo] bonus failed for', uid, e.message); }
       }
-      return { accounts: enriched };
+    }
+    demoAccountsInitialized = true;
+    console.log('[demo] 100 accounts ensured');
+  }
+  if (isDemo) {
+    // Initialize accounts on first request
+    route('GET', '/demo-init', async () => {
+      await ensureDemoAccounts();
+      return { ok: true, count: DEMO_ACCOUNT_COUNT };
     });
-    // Switch to a historical account (returns new token)
-    route('POST', '/demo-switch', async (b) => {
-      const fingerprint = String(b.fingerprint || '').trim();
-      const targetUid = String(b.uid || '').trim();
-      if (!fingerprint || fingerprint.length < 8) throw new GameError(Codes.BAD_INPUT, 'Browser fingerprint required');
-      if (!targetUid) throw new GameError(Codes.BAD_INPUT, 'uid required');
-      const history = demoHistory.get(fingerprint) || [];
-      const entry = history.find(e => e.uid === targetUid);
-      if (!entry) throw new GameError(Codes.FORBIDDEN, 'Account not found in your browser history');
-      const user = await store.getUser(targetUid);
-      if (!user) throw new GameError(Codes.NOT_FOUND, 'User not found');
+    route('POST', '/demo-login', async (b) => {
+      await ensureDemoAccounts();
+      let accountNum = parseInt(b.accountNum, 10);
+      // If no account specified, pick random
+      if (!accountNum || accountNum < 1 || accountNum > DEMO_ACCOUNT_COUNT) {
+        accountNum = Math.floor(Math.random() * DEMO_ACCOUNT_COUNT) + 1;
+      }
+      const uid = 'U' + String(accountNum).padStart(3, '0');
+      const user = await store.getUser(uid);
+      if (!user) throw new GameError(Codes.NOT_FOUND, 'Demo account not found');
       if (user.banned) throw new GameError(Codes.BANNED, 'Account banned');
-      entry.lastActive = now();
       const token = signJwt({ uid: user.uid, wallet: user.wallet });
-      return { ...user, isAdmin: false, token, isNew: false, demoMode: true };
+      return { ...user, isAdmin: false, token, isNew: false, demoMode: true, accountNum };
+    });
+    // List all demo accounts (for manual selection)
+    route('GET', '/demo-accounts', async () => {
+      await ensureDemoAccounts();
+      const accounts = [];
+      for (let i = 1; i <= DEMO_ACCOUNT_COUNT; i++) {
+        const uid = 'U' + String(i).padStart(3, '0');
+        try {
+          const acc = await store.getAccount(uid);
+          accounts.push({ uid, num: i, balance: acc ? Number(acc.available) / 1000000 : 0 });
+        } catch { accounts.push({ uid, num: i, balance: 0 }); }
+      }
+      return { accounts };
     });
   }
   // Auth: nonce endpoint for wallet signature login

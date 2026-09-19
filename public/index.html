@@ -42,9 +42,17 @@
       <h2 data-i18n="appTitle">Three-Minute Wish Pool</h2>
       <p class="muted" data-i18n="loginTip">Connect a wallet to start. Invite links bind referrers automatically.</p>
       <button id="connectBtn" class="btn-primary big" data-i18n="connectWallet">Connect Wallet</button>
-      <button id="demoBtn" class="btn-ghost" data-i18n="demoEnter">No wallet? Enter as demo</button>
-      <button id="demoHistoryBtn" class="btn-ghost" style="font-size:12px;margin-top:8px;">📜 历史账号 (History)</button>
-      <div id="demoHistoryList" class="hide" style="margin-top:10px;max-height:200px;overflow-y:auto;border:1px solid #333;border-radius:8px;padding:8px;"></div>
+      <div style="margin-top:16px;padding-top:16px;border-top:1px solid #333;">
+        <p style="color:#aaa;font-size:13px;margin-bottom:8px;">🎮 演示模式 - 输入账号编号 (1-100)，或随机分配</p>
+        <div style="display:flex;gap:8px;margin-bottom:8px;">
+          <input type="number" id="demoAccountInput" min="1" max="100" placeholder="1-100" style="flex:1;padding:10px;border-radius:8px;border:1px solid #444;background:#1a1a2e;color:#fff;text-align:center;font-size:16px;" />
+          <button id="demoLoginBtn" class="btn-primary" style="padding:10px 20px;white-space:nowrap;">登录</button>
+        </div>
+        <button id="demoRandomBtn" class="btn-ghost" style="width:100%;padding:10px;font-size:14px;">🎲 随机账号登录</button>
+        <p id="demoCachedHint" style="font-size:12px;color:#888;margin-top:8px;display:none;"></p>
+      </div>
+      
+      
       <p id="loginErr" class="err"></p>
     </div>
   </div>
@@ -586,7 +594,7 @@
   <!-- Bottom dock -->
   <nav id="dock" class="dock hide">
     <button data-dock="home" class="dock-item active"><span class="dock-ico">⌂</span><span data-i18n="dockHome">Home</span></button>
-    <button data-dock="lottery" class="dock-item"><span class="dock-ico">♡</span><span data-i18n="dockLottery">Lucky</span></button>
+    <button data-dock="lottery" class="dock-item"><span class="dock-ico">🎫</span><span data-i18n="dockLottery">彩票</span></button>
     <button data-dock="bbs" class="dock-item"><span class="dock-ico">✎</span><span data-i18n="dockBbs">Board</span></button>
     <button data-dock="insurance" class="dock-item"><span class="dock-ico">✦</span><span data-i18n="dockIns">Insurance</span></button>
     <button data-dock="me" class="dock-item"><span class="dock-ico">◔</span><span data-i18n="dockMe">Me</span></button>
