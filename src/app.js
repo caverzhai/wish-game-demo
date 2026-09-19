@@ -1,4 +1,4 @@
-﻿// App assembly: MySQL persistence if Railway env vars present, otherwise in-memory store (local/demo)
+// App assembly: MySQL persistence if Railway env vars present, otherwise in-memory store (local/demo)
 import { MemoryStore } from './store.js';
 import { MysqlStore } from './store-mysql.js';
 import { DEFAULT_CONFIG, DEMO_CONFIG_OVERRIDES } from './config.js';
@@ -17,12 +17,14 @@ import { BackupService } from './BackupService.js';
 
 const MYSQL_KEYS = ['DATABASE_URL', 'MYSQL_URL', 'MYSQL_PUBLIC_URL', 'MYSQL_PRIVATE_URL', 'MYSQLHOST', 'MYSQL_HOST', 'MYSQLDATABASE', 'MYSQL_DATABASE'];
 export function useMysql(env = process.env) {
-  return MYSQL_KEYS.some((k) => env[k]);
+  // Check explicit keys OR any env var starting with MYSQL (Railway injects MYSQLHOST, MYSQLPORT, etc.)
+  if (MYSQL_KEYS.some((k) => env[k])) return true;
+  return Object.keys(env).some((k) => k.startsWith('MYSQL') && env[k]);
 }
 
-export async function createApp(cfg = DEFAULT_CONFIG, env = process.env, databaseOverride = null) {
+export async function createApp(cfg = DEFAULT_CONFIG, env = process.env, databaseOverride = null, isDemoMode = false) {
   // Demo mode: apply faster config overrides
-  const effectiveCfg = databaseOverride ? { ...cfg, ...DEMO_CONFIG_OVERRIDES } : cfg;
+  const effectiveCfg = isDemoMode ? { ...cfg, ...DEMO_CONFIG_OVERRIDES } : cfg;
   const store = useMysql(env) ? new MysqlStore(env, databaseOverride) : new MemoryStore();
   await store.init();
   const insurance = new InsuranceService(store, effectiveCfg);

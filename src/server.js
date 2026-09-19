@@ -99,7 +99,7 @@ const IS_DEMO_MODE = process.env.DEMO_MODE !== 'false' && process.env.DEMO_MODE 
 const DB_NAME = null; // Independent demo project uses its own MySQL instance, no DB name override needed
 
 // Create single app instance based on mode
-const app = await createApp(undefined, process.env, DB_NAME);
+const app = await createApp(undefined, process.env, DB_NAME, IS_DEMO_MODE);
 
 // Demo mode overrides: faster cycles for demonstration
 if (IS_DEMO_MODE) {
