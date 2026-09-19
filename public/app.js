@@ -1,4 +1,4 @@
-﻿// =============================================================
+// =============================================================
 // app.js - English / Traditional Chinese / Japanese; bottom dock: Home(wish+history)/Board/Insurance/Me
 // Payment: in-site balance first, external wallet covers shortfall; BBS with admin delete/ban/blocked-word moderation
 // =============================================================
@@ -2111,6 +2111,54 @@ async function refresh() {
 }
 
 // ---------------- Init ----------------
+// Demo history: load and switch accounts from same browser
+async function loadDemoHistory() {
+  try {
+    const fp = getBrowserFingerprint();
+    const data = await api('/demo-history', { fingerprint: fp });
+    const list = demoHistoryList;
+    if (!data.accounts || data.accounts.length === 0) {
+      list.innerHTML = '<p style="color:#888;font-size:12px;">暂无历史账号</p>';
+      return;
+    }
+    list.innerHTML = data.accounts.map((a, i) => 
+      <div style="padding:6px;border-bottom:1px solid #222;cursor:pointer;display:flex;justify-content:space-between;align-items:center;" onclick="switchDemoAccount('')">
+        <div>
+          <div style="font-weight:bold;"></div>
+          <div style="font-size:11px;color:#888;">...</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="color:#ffd700;font-size:13px;"> coins</div>
+          <div style="font-size:10px;color:#666;"></div>
+        </div>
+      </div>
+    ).join('');
+  } catch (e) {
+    demoHistoryList.innerHTML = '<p style="color:#f66;font-size:12px;">加载失败: ' + e.message + '</p>';
+  }
+}
+function toggleDemoHistory() {
+  const list = demoHistoryList;
+  if (list.classList.contains('hide')) {
+    list.classList.remove('hide');
+    loadDemoHistory();
+  } else {
+    list.classList.add('hide');
+  }
+}
+async function switchDemoAccount(uid) {
+  try {
+    const fp = getBrowserFingerprint();
+    const u = await api('/demo-switch', { fingerprint: fp, uid });
+    state.uid = u.uid; state.wallet = u.wallet; state.isAdmin = false; state.demoMode = true;
+    localStorage.setItem('uid', u.uid); localStorage.setItem('wallet', u.wallet); localStorage.setItem('token', u.token); localStorage.setItem('demoMode', '1');
+    demoHistoryList.classList.add('hide');
+    enterMain();
+    showToast('已切换到 ' + u.uid);
+  } catch (e) {
+    alert('切换失败: ' + e.message);
+  }
+}
 function init() {
   // Custom language dropdown (no native select popup)
   const langNames = { en: 'EN', 'zh-TW': '繁體', ja: '日本語', ar: 'العربية', id: 'Indonesia', ko: '한국어', ru: 'Русский', hi: 'हिन्दी', ur: 'اردو' };
@@ -2132,6 +2180,7 @@ function init() {
   document.addEventListener('click', () => $('langMenu').classList.add('hide'));
   applyI18n();
   $('connectBtn').onclick = connectWallet; $('demoBtn').onclick = demoEnter;
+  if ($('demoHistoryBtn')) $('demoHistoryBtn').onclick = toggleDemoHistory;
   $('sideRed').onclick = () => selectSide('red'); $('sideGreen').onclick = () => selectSide('green');
   $('betBtn').onclick = submitWish;
   $('selfCheckBtn').onclick = walletSelfCheck;
